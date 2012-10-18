@@ -77,6 +77,8 @@ def descramble(f_in, f_out):
 
 fn_in = sys.argv[1]
 fn_out = sys.argv[2]
+if len(sys.argv) > 3:
+	key = int(sys.argv[3], 0)
 
 f_in = open(fn_in, 'rb')
 f_out = open(fn_out, 'wb')
