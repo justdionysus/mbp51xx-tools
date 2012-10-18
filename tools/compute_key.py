@@ -31,20 +31,46 @@ def unconfuse(x):
 	return res
 
 def undiffuse(x):
-	res = 0
-	i = 0
 	x >>= 1
-	x |= 0x80000000
-	x = x & 0xffffffff
+	x1 = x
+	x2 = x | 0x80000000
+	x1 &= 0xffffffff
+	x2 &= 0xffffffff
 
-	for i in range(32):
-		res |= ((x & 1) << perm[31 - i]) & 0xffffffff
-		x >>= 1
+	def ud(a):
+		res = 0
+		for i in range(32):
+			res |= ((a & 1) << perm[31 - i]) & 0xffffffff
+			a >>= 1
+			a &= 0xffffffff
+		return res
 
-	return res
+	return (ud(x1), ud(x2))
 
 
 
 import sys
-print hex(unconfuse(undiffuse(int(sys.argv[2], 0))))
+usage = """
+Example usage:
+
+$ hexdump -C ~/projects/bluray/firmware/E5S20UD/E5S20UD1019FA1.bin | head
+00000000  26 0b 93 c7 69 6e 64 65  16 cf ce a0 62 6c 65 00  |&...inde....ble.|
+
+$ ./compute_key.py 0xc7930b26 0x65646e69 0x61745f78
+
+"""
+
+ct = int(sys.argv[1], 0)
+pt0 = 0x65646e69
+pt4 = 0x61745f78
+if len(sys.argv) == 4:
+	pt0 = int(sys.argv[2], 0)
+	pt4 = int(sys.argv[3], 0)
+elif len(sys.argv) != 2:
+	print usage
+	sys.exit(-1)
+
+ud1, ud2 = undiffuse(xor32(ct, pt4))
+print hex(xor32(unconfuse(ud1), pt0))
+print hex(xor32(unconfuse(ud2), pt0))
 sys.exit(0)
